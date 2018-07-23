@@ -1,0 +1,136 @@
+query Repository (
+  $owner:String!,
+  $name:String!,
+  $afterIssue:String,
+  $afterLabel:String,
+  $afterPullRequest:String,
+  $getFields:Boolean!,
+  $getIssues:Boolean!,
+  $getLabels:Boolean!,
+  $getPullRequests:Boolean!,
+)
+{
+  repository(owner:$owner, name:$name) {
+    ...RepositoryFields @include(if:$getFields)
+    ...RepositoryIssues @include(if:$getIssues)
+    ...RepositoryLabels @include(if:$getLabels)
+    ...RepositoryPullRequests @include(if:$getPullRequests)
+  }
+}
+
+fragment RepositoryFields on Repository {
+  name
+  id
+  createdAt
+  updatedAt
+  nameWithOwner
+  description
+  defaultBranchRef { name }
+  isArchived
+  isFork
+  isLocked
+  isMirror
+  isPrivate
+  stargazers { totalCount }
+  watchers { totalCount }
+}
+
+fragment RepositoryIssues on Repository {
+  issues(
+    first:100,
+    after:$afterIssue,
+    orderBy: { field:UPDATED_AT, direction:DESC }
+  ) {
+    pageInfo { endCursor hasNextPage }
+    edges {
+      node {
+        number
+        state
+        author { login }
+        title
+        createdAt
+        updatedAt
+        closedAt
+        locked
+        milestone { id }
+        body
+	comments (first:100) {
+	  pageInfo { endCursor hasNextPage }
+	  edges {
+	    node {
+	      databaseId
+              author { login }
+	      createdAt
+	      updatedAt
+              body
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
+
+fragment RepositoryLabels on Repository {
+  labels (first:100, after:$afterLabel) {
+    pageInfo { endCursor hasNextPage }
+    edges {
+      node {
+	id
+	name
+	color
+	description
+      }
+    }
+  }
+}
+
+fragment RepositoryPullRequests on Repository {
+  pullRequests(
+    first:100,
+    after:$afterPullRequest,
+    orderBy: { field:UPDATED_AT, direction:DESC }
+  ) {
+    pageInfo { endCursor hasNextPage }
+    edges {
+      node {
+        number
+        state
+        author { login }
+        title
+        createdAt
+        updatedAt
+        closedAt
+        mergedAt
+        locked
+        maintainerCanModify
+        isCrossRepository
+        milestone { id }
+        body
+        baseRef {
+          name
+          repository { nameWithOwner }
+	}
+        headRef {
+          name
+          repository {
+            owner { login }
+            nameWithOwner
+	  }
+	}
+	comments (first:100) {
+	  pageInfo { endCursor hasNextPage }
+	  edges {
+	    node {
+	      databaseId
+              author { login }
+	      createdAt
+	      updatedAt
+	      body
+	    }
+	  }
+	}
+      }
+    }
+  }
+}
